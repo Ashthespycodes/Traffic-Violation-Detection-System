@@ -37,5 +37,7 @@ The goal is to demonstrate how artificial intelligence and computer vision can b
 | **Google Colab** | Development and execution environment |
 | **NumPy**        | Numerical operations (distance, tracking) |
 
+The Backend has not been connected 
+
 
 
