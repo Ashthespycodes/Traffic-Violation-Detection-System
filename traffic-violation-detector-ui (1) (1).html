@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Traffic Violation Detector</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+        :root {
+            --primary: #3498db;
+            --danger: #e74c3c;
+            --success: #2ecc71;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+            --warning: #f39c12;
+            --info: #1abc9c;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: var(--dark);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: var(--shadow);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .logo i {
+            color: var(--primary);
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 20px;
+        }
+        
+        nav a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+        
+        nav a:hover, nav a.active {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        main {
+            margin-top: 2rem;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .card h2 {
+            margin-bottom: 15px;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card h2 i {
+            color: var(--primary);
+        }
+        
+        .video-container {
+            position: relative;
+            width: 100%;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            aspect-ratio: 16/9;
+        }
+        
+        #video-feed {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            gap: 10px;
+        }
+        
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s, transform 0.1s;
+        }
+        
+        button:hover {
+            background: #2980b9;
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        button.danger {
+            background: var(--danger);
+        }
+        
+        button.danger:hover {
+            background: #c0392b;
+        }
+        
+        .upload-btn {
+            background: var(--success);
+        }
+        
+        .upload-btn:hover {
+            background: #27ae60;
+        }
+        
+        .statistics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 10px 0;
+        }
+        
+        .violations-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .violation-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .violation-item:last-child {
+            border-bottom: none;
+        }
+        
+        .violation-img {
+            width: 80px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-right: 15px;
+        }
+        
+        .violation-details h4 {
+            margin-bottom: 5px;
+        }
+        
+        .violation-details p {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .violation-type {
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            margin-right: 5px;
+            color: white;
+        }
+        
+        .violation-type.speeding {
+            background: var(--danger);
+        }
+        
+        .violation-type.redlight {
+            background: var(--warning);
+        }
+        
+        .violation-type.lane {
+            background: var(--info);
+        }
+        
+        .violation-type.crash {
+            background: var(--dark);
+        }
+        
+        .violation-time {
+            color: #777;
+            font-size: 0.85rem;
+        }
+        
+        .settings-form {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .form-group label {
+            font-weight: 500;
+        }
+        
+        input, select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            background: #f8f9fa;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #aaa;
+        }
+        
+        .status-dot.active {
+            background: var(--success);
+            box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.2);
+        }
+        
+        .status-text {
+            font-size: 0.9rem;
+        }
+        
+        .loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.2rem;
+            display: none;
+        }
+        
+        .loading.active {
+            display: flex;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .detection-indicators {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+        
+        .indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .indicator i {
+            color: var(--primary);
+        }
+        
+        .feature-toggle {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .toggle-btn {
+            padding: 8px 15px;
+            border-radius: 4px;
+            background: #f1f1f1;
+            border: 1px solid #ddd;
+            color: #666;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+        }
+        
+        .toggle-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .toggle-btn i {
+            font-size: 0.8rem;
+        }
+        
+        /* Violations Log Page */
+        .page {
+            display: none;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .filter-group label {
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        
+        .filter-group select, .filter-group input {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        
+        .logs-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .logs-table th, .logs-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .logs-table th {
+            font-weight: 600;
+            background: #f8f9fa;
+        }
+        
+        .logs-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-top: 20px;
+        }
+        
+        .page-btn {
+            width: 35px;
+            height: 35px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .page-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .page-btn:hover:not(.active) {
+            background: #f1f1f1;
+        }
+        
+        .detection-type-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            color: white;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .statistics {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .filters {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container header-content">
+            <div class="logo">
+                <i class="fas fa-traffic-light"></i>
+                <span>AI Traffic Violation Detector</span>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#" class="active" data-page="dashboard">Dashboard</a></li>
+                    <li><a href="#" data-page="violations-log">Violations Log</a></li>
+                    <li><a href="#" data-page="settings">Settings</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    
+    <main class="container">
+        <!-- Dashboard Page -->
+        <div class="page active" id="dashboard">
+            <div class="dashboard">
+                <div class="main-content">
+                    <div class="card">
+                        <h2><i class="fas fa-video"></i> Video Feed</h2>
+                        <div class="video-container">
+                            <img id="video-feed" src="/api/placeholder/800/450" alt="Video Feed">
+                            <div class="loading" id="loading">
+                                <div class="spinner"></div>
+                                <span>Processing video...</span>
+                            </div>
+                        </div>
+                        <div class="feature-toggle">
+                            <button class="toggle-btn active" data-feature="numberplate">
+                                <i class="fas fa-id-card"></i> Number Plate Detection
+                            </button>
+                            <button class="toggle-btn active" data-feature="lane">
+                                <i class="fas fa-road"></i> Lane Detection
+                            </button>
+                            <button class="toggle-btn active" data-feature="crash">
+                                <i class="fas fa-car-crash"></i> Crash Detection
+                            </button>
+                            <button class="toggle-btn active" data-feature="speed">
+                                <i class="fas fa-tachometer-alt"></i> Speed Detection
+                            </button>
+                            <button class="toggle-btn active" data-feature="redlight">
+                                <i class="fas fa-traffic-light"></i> Red Light Detection
+                            </button>
+                        </div>
+                        <div class="controls">
+                            <div>
+                                <button id="start-btn"><i class="fas fa-play"></i> Start Detection</button>
+                                <button id="stop-btn" class="danger"><i class="fas fa-stop"></i> Stop</button>
+                            </div>
+                            <div>
+                                <button class="upload-btn"><i class="fas fa-upload"></i> Upload Video</button>
+                            </div>
+                        </div>
+                        <div class="detection-indicators">
+                            <div class="indicator">
+                                <i class="fas fa-car"></i>
+                                <span>Cars: <span id="car-count">0</span></span>
+                            </div>
+                            <div class="indicator">
+                                <i class="fas fa-road"></i>
+                                <span>Lanes: <span id="lane-count">0</span></span>
+                            </div>
+                            <div class="indicator">
+                                <i class="fas fa-id-card"></i>
+                                <span>Plates: <span id="plate-count">0</span></span>
+                            </div>
+                        </div>
+                        <div class="status-indicator">
+                            <div class="status-dot" id="status-dot"></div>
+                            <div class="status-text" id="status-text">Detection inactive</div>
+                        </div>
+                    </div>
+                    
+                    <div class="statistics">
+                        <div class="stat-card">
+                            <h3>Violations Today</h3>
+                            <div class="stat-number">24</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Number Plates Detected</h3>
+                            <div class="stat-number">157</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Crash Incidents</h3>
+                            <div class="stat-number">3</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="sidebar">
+                    <div class="card">
+                        <h2><i class="fas fa-exclamation-triangle"></i> Recent Violations</h2>
+                        <div class="violations-list">
+                            <div class="violation-item">
+                                <img src="/api/placeholder/80/60" alt="Violation" class="violation-img">
+                                <div class="violation-details">
+                                    <h4>ABC-1234</h4>
+                                    <span class="violation-type speeding">Speeding</span>
+                                    <span class="violation-time">Today, 14:32</span>
+                                    <p>Speed: 78 km/h in 50 km/h zone</p>
+                                </div>
+                            </div>
+                            <div class="violation-item">
+                                <img src="/api/placeholder/80/60" alt="Violation" class="violation-img">
+                                <div class="violation-details">
+                                    <h4>XYZ-7890</h4>
+                                    <span class="violation-type redlight">Red Light</span>
+                                    <span class="violation-time">Today, 13:15</span>
+                                    <p>Crossed intersection during red signal</p>
+                                </div>
+                            </div>
+                            <div class="violation-item">
+                                <img src="/api/placeholder/80/60" alt="Violation" class="violation-img">
+                                <div class="violation-details">
+                                    <h4>DEF-5678</h4>
+                                    <span class="violation-type lane">Lane Violation</span>
+                                    <span class="violation-time">Today, 12:08</span>
+                                    <p>Improper lane change detected</p>
+                                </div>
+                            </div>
+                            <div class="violation-item">
+                                <img src="/api/placeholder/80/60" alt="Violation" class="violation-img">
+                                <div class="violation-details">
+                                    <h4>GHI-9012</h4>
+                                    <span class="violation-type crash">Crash Incident</span>
+                                    <span class="violation-time">Yesterday, 18:45</span>
+                                    <p>Minor collision detected at intersection</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h2><i class="fas fa-cog"></i> Quick Settings</h2>
+                        <form class="settings-form">
+                            <div class="form-group">
+                                <label for="detection-type">Primary Detection Focus</label>
+                                <select id="detection-type">
+                                    <option value="all">All Violations</option>
+                                    <option value="speed">Speeding Only</option>
+                                    <option value="redlight">Red Light Only</option>
+                                    <option value="lane">Lane Violations Only</option>
+                                    <option value="crash">Crash Incidents Only</option>
+                                    <option value="plate">Number Plates Only</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="sensitivity">Detection Sensitivity</label>
+                                <input type="range" id="sensitivity" min="1" max="10" value="7">
+                            </div>
+                            <div class="form-group">
+                                <label for="threshold">Confidence Threshold (%)</label>
+                                <input type="number" id="threshold" min="0" max="100" value="85">
+                            </div>
+                            <button type="submit">Apply Settings</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Violations Log Page -->
+        <div class="page" id="violations-log">
+            <div class="card">
+                <h2><i class="fas fa-clipboard-list"></i> Violations Log</h2>
+                
+                <div class="filters">
+                    <div class="filter-group">
+                        <label for="date-filter">Date:</label>
+                        <input type="date" id="date-filter">
+                    </div>
+                    <div class="filter-group">
+                        <label for="type-filter">Violation Type:</label>
+                        <select id="type-filter">
+                            <option value="all">All Types</option>
+                            <option value="speeding">Speeding</option>
+                            <option value="redlight">Red Light</option>
+                            <option value="lane">Lane Violation</option>
+                            <option value="crash">Crash</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="plate-filter">License Plate:</label>
+                        <input type="text" id="plate-filter" placeholder="Search plate number">
+                    </div>
+                    <button id="apply-filters"><i class="fas fa-filter"></i> Apply Filters</button>
+                </div>
+                
+                <div class="table-container">
+                    <table class="logs-table">
+                        <thead>
+                            <tr>
+                                <th>Date & Time</th>
+                                <th>License Plate</th>
+                                <th>Violation Type</th>
+                                <th>Location</th>
+                                <th>Details</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2023-06-15 14:32:17</td>
+                                <td>ABC-1234</td>
+                                <td><span class="detection-type-badge" style="background: var(--danger)">Speeding</span></td>
+                                <td>Main Street</td>
+                                <td>78 km/h in 50 km/h zone</td>
+                                <td>
+                                    <button class="btn-small"><i class="fas fa-eye"></i></button>
+                                    <button class="btn-small"><i class="fas fa-download"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>2023-06-15 13:15:42</td>
+                                <td>XYZ-7890</td>
+                                <td><span class="detection-type-badge" style="background: var(--warning)">Red Light</span></td>
+                                <td>Park Avenue</td>
+                                <td>Crossed intersection during red signal</td>
+                                <td>
+                                    <button class="btn-small"><i class="fas fa-eye"></i></button>
+                                    <button class="btn-small"><i class="fas fa-download"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>2023-06-15 12:08:53</td>
+                                <td>DEF-5678</td>
+                                <td><span class="detection-type-badge" style="background: var(--info)">Lane Violation</span></td>
+                                <td>Highway 101</td>
+                                <td>Improper lane change detected</td>
+                                <td>
+                                    <button class="btn-small"><i class="fas fa-eye"></i></button>
+                                    <button class="btn-small"><i class="fas fa-download"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>2023-06-14 18:45:09</td>
+                                <td>GHI-9012</td>
+                                <td><span class="detection-type-badge" style="background: var(--dark)">Crash</span></td>
+                                <td>5th Street</td>
+                                <td>Minor collision detected at intersection</td>
+                                <td>
+                                    <button class="btn-small"><i class="fas fa-eye"></i></button>
+                                    <button class="btn-small"><i class="fas fa-download"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>2023-06-14 16:22:31</td>
+                                <td>JKL-3456</td>
+                                <td><span class="detection-type-badge" style="background: var(--danger)">Speeding</span></td>
+                                <td>River Road</td>
+                                <td>92 km/h in 60 km/h zone</td>
+                                <td>
+                                    <button class="btn-small"><i class="fas fa-eye"></i></button>
+                                    <button class="btn-small"><i class="fas fa-download"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>2023-06-14 14:07:16</td>
+                                <td>MNO-7890</td>
+                                <td><span class="detection-type-badge" style="background: var(--info)">Lane Violation</span></td>
+                                <td>Oak Street</td>
+                                <td>Driving on bus lane</td>
+                                <td>
+                                    <button class="btn-small"><i class="fas fa-eye"></i></button>
+                                    <button class="btn-small"><i class="fas fa-download"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>2023-06-13 19:52:47</td>
+                                <td>PQR-1234</td>
+                                <td><span class="detection-type-badge" style="background: var(--warning)">Red Light</span></td>
+                                <td>Central Avenue</td>
+                                <td>Crossed intersection 2.1s after red signal</td>
+                                <td>
+                                    <button class="btn-small"><i class="fas fa-eye"></i></button>
+                                    <button class="btn-small"><i class="fas fa-download"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="pagination">
+                    <button class="page-btn"><i class="fas fa-chevron-left"></i></button>
+                    <button class="page-btn active">1</button>
+                    <button class="page-btn">2</button>
+                    <button class="page-btn">3</button>
+                    <button class="page-btn"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Settings Page -->
+        <div class="page" id="settings">
+            <div class="card">
+                <h2><i class="fas fa-cog"></i> System Settings</h2>
+                
+                <form class="settings-form">
+                    <h3>Detection Settings</h3>
+                    <div class="form-group">
+                        <label for="camera-source">Camera Source</label>
+                        <select id="camera-source">
+                            <option value="0">Default Camera (0)</option>
+                            <option value="1">Camera 1</option>
+                            <option value="rtsp">RTSP Stream</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="rtsp-url">RTSP URL (if applicable)</label>
+                        <input type="text" id="rtsp-url" placeholder="rtsp://example.com/stream">
+                    </div>
+                    
+                    <h3>Detection Thresholds</h3>
+                    <div class="form-group">
+                        <label for="speed-threshold">Speed Violation Threshold (km/h)</label>
+                        <input type="number" id="speed-threshold" value="50">
+                    </div>
+                    <div class="form-group">
+                        <label for="lane-sensitivity">Lane Detection Sensitivity</label>
+                        <input type="range" id="lane-sensitivity" min="1" max="10" value="7">
+                    </div>
+                    <div class="form-group">
+                        <label for="crash-sensitivity">Crash Detection Sensitivity</label>
+                        <input type="range" id="crash-sensitivity" min="1" max="10" value="8">
+                    </div>
+                    <div class="form-group">
+                        <label for="plate-confidence">Number Plate Detection Confidence (%)</label>
+                        <input type="number" id="plate-confidence" min="0" max="100" value="85">
+                    </div>
+                    
+                    <h3>System Settings</h3>
+                    <div class="form-group">
+                        <label for="save-detections">Save Detections</label>
+                        <select id="save-detections">
+                            <option value="all">Save All Detections</option>
+                            <option value="violations">Save Only Violations</option>
+                            <option value="none">Don't Save</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="fps">Processing FPS</label>
+                        <select id="fps">
+                            <option value="30">30 FPS (High CPU Usage)</option>
+                            <option value="15" selected>15 FPS (Balanced)</option>
+                            <option value="5">5 FPS (Low CPU Usage)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="retention">Log Retention Period</label>
+                        <select id="retention">
+                            <option value="7">7 Days</option>
+                            <option value="30" selected>30 Days</option>
+                            <option value="90">90 Days</option>
+                            <option value="365">1 Year</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit">Save All Settings</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Basic UI functionality
+        document.addEventListener('
